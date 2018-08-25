@@ -15,7 +15,11 @@
 	(global.commone = global.Z = factory());
 }(this, (function () { 'use strict';
 
-	var toStoring = Object.prototype.toString;
+	var objectPrototype = Object.prototype,
+	    arrayPrototype = Array.prototype,
+	    toString = objectPrototype.toString,
+	    hasOwnProperty = objectPrototype.hasOwnProperty,
+	    slice = arrayPrototype.slice;
 
 	var Z = {};
 	Z.version = '1.0.0';
@@ -64,14 +68,41 @@
 	 	return isNaN(val) ? val : 1;
 	 }
 
-	 //是否对象,同时排除null
-	 Z.isObject = function(obj){
-	 	return typeof obj === 'object' && !!obj;
-	 }
-
 	 //是否数组
 	 Z.isArray = Array.isArray || function(data){
 	 	return toString.call(data) === '[object Array]';
+	 }
+
+	 //转为数组,包含undefined,null,arguments,array,object
+	 Z.toArray = function(obj){
+	 	if(obj == null) return [];
+	 	if(obj && obj.callee) return slice.call(obj,0);
+	 	if(Z.isArray(obj)) return obj;
+	 	return Z.map(function(val){
+	 		return val
+	 	});
+	 }
+
+	 //是否对象,同时排除null
+	 var isObject = Z.isObject = function(obj){
+	 	return typeof obj === 'object' && !!obj;
+	 }
+
+	 //检查对象是否包含某个属性
+	 var hasOwn = Z.hasOwnProperty = function(obj,key){
+	 	return Z.isObject(obj) && hasOwn.call(obj,key);
+	 }
+
+	 //获取对象的所有属性名
+	 Z.getAllKeys = function(obj){
+	 	var keys = [];
+	 	if(isObject(obj)){
+	 		for(var key in obj){
+	 			if(!hasOwn(obj,key)) continue;
+	 			keys.push(key);
+	 		}
+	 	}
+	 	return keys;
 	 }
 
 	 //检查变量值是否为空
@@ -87,6 +118,77 @@
 	 		return obj.length === 0;
 	 	}
 	 }
+
+	/**
+	 *常用的数据操作函数
+	 */
+
+	 function isLikeArray(obj){
+	 	var length = obj == null ? void 0 : obj['length'];
+	 	return typeof length === 'number' && length >= 0;
+	 }
+
+	 //each方法，用于遍历每一项数据
+	 //obj-传入要遍历的对象,fn-传入进行处理的函数,context-上下文环境
+	 var each = Z.each = function(obj,fn,context){
+	 	var i = 0,
+	 	length = obj.length,
+	 	isArray = isLikeArray(obj);
+	 	if(isArray){
+	 		for(;i<length;i++){
+	 			fn.call(context, obj[i], i ,obj);
+	 		}
+	 	}else{
+	 		for(var key in obj){
+	 			if(!hasOwn(obj,key)) continue;
+	 			fn.call(context, obj[key], key, obj);
+	 		}
+	 	}
+	 }
+
+	 //map方法,用于遍历每一项数据进行转换后返回新数据，不改变原数据
+	 Z.map = function(obj,fn,context){
+	 	if(obj && obj.map) return obj.map(fn,context);
+	 	var temp = [];
+	 	each(obj, function(val,index,obj){
+	 		temp.push(fn.call(context, val, index, obj));
+	 	});
+	 	return temp;
+	 }
+
+	 //filter方法，过滤返回符合条件的值
+	 Z.filter = function(obj,fn,context){
+	 	if(obj && obj.filter) return obj.filter(fn,context);
+	 	var temp = [];
+	 	each(obj, function(val,index,obj){
+	 		if(fn.call(context,val,index,obj)) temp[temp.length] = val;
+	 	});
+	 }
+
+	 //合并对象
+	 Z.extend = function(obj){
+	 	var i = 1,
+	 	    len = arguments.length;
+      if (obj == null || len < 2) return obj;
+      for (; i < len; i++) {
+        var src = arguments[i],
+            keys = Z.getAllKeys(src),
+	 	    j = 0,
+            l = keys.length;
+        for (; j < l; j++) {
+          var key = keys[j];
+          if(!obj[key]) obj[key] = src[key];
+        }
+      }
+      return obj;
+	 }
+
+	 //克隆
+	 Z.clone = function(obj){
+	 	if(obj == null) return;
+	 	return Z.isArray(obj) ? obj.slice(0) : Z.extend({},obj);
+	 }
+
 
 	 
 	 return Z
