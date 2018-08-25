@@ -165,7 +165,7 @@
 	 	});
 	 }
 
-	 //合并对象
+	 //合并对象,实现Object.assign
 	 Z.extend = function(obj){
 	 	var i = 1,
 	 	    len = arguments.length;
@@ -177,7 +177,11 @@
             l = keys.length;
         for (; j < l; j++) {
           var key = keys[j];
-          if(!obj[key]) obj[key] = src[key];
+          if(hasOwn(obj,key)){
+          	obj[key] = src[key];
+          }else if(obj[key] == void 0){
+          	obj[key] = src[key];
+          }
         }
       }
       return obj;
@@ -188,6 +192,168 @@
 	 	if(obj == null) return;
 	 	return Z.isArray(obj) ? obj.slice(0) : Z.extend({},obj);
 	 }
+
+	/**
+	 *URL相关操作
+	 *
+	 */
+
+	 //获取URL中某个参数的值
+	 Z.getUrlParam = function(param){
+	 	var reg = new RegExp('[&,?]' + param + '=([^\\&]*)', 'i');
+	 	var value = reg.exec(location.search);
+	 	return value ? value[1] : '';
+	 }
+
+	 //修改URL中的某个参数的值，返回修改后的URL
+	 Z.uptUrlParam = function(url,param,val){
+	 	if(arguments.length !== 3) return;
+	 	if(url == null || param == null || val == null) return;
+	 	var pattern = param + '=([^&]*)';
+	 	var replace = param + '=' + val;
+	 	if (url.match(pattern)) {
+	 		var temp = '/(' + param + '=)([^&]*)/gi';
+	 		temp = url.replace(eval(temp), replace);
+	 		return temp;
+	 	} else {
+	 		if (url.match('[\?]')) {
+	 			return url + '&' + replace;
+	 		} else {
+	 			return url + '?' + replace;
+	 		}
+	 	}
+	 	return url + '\n' + param + '\n' + val;
+	 }
+
+	/**
+	 *本地存储相关操作
+	 *
+	 */
+
+
+	 Z.setCookie = function(name, val , days){
+	 	var day = days || 30,
+	 	    date = new Date();
+	 	    date.setTime(date.getTime() + day*24*3600*1000);
+	 	if(isObject(val)) val = JSON.stringify(val);
+	 	document.cookie = name + "=" + escape(val) + ";expires=" + date.toGMTString();
+	 }
+
+	 Z.getCookie = function(name){
+	 	var arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
+	 	if (arr = document.cookie.match(reg)){
+	 		var val = unescape(arr[2]);
+	 		if(val && val.indexOf('{') != -1 && val.indexOf('}') != -1)
+	 			return JSON.parse(val);
+	 		return val;
+	 	}else{
+	 		return '';
+	 	}
+	 }
+
+	 Z.delCookie = function(name){
+	 	var val = Z.getCookie(name);
+	 	if(val == '') return;
+	 	var date = new Date();
+	 	date.setTime(date.getTime() - 24*3600*1000);
+	 	document.cookie = name + "=" + val + ";expires=" + date.toGMTString();
+	 }
+
+	 //设置浏览器本地存储
+	 //如果不支持localStorage，那么就用cookie存储
+
+	 //设置本地缓存
+	 Z.setLocalStorage = function(name,val){
+	 	try{
+	 		if(isObject(val)) val = JSON.stringify(val);
+	 		localStorage.setItem(name, val);
+	 	}catch{
+	 		Z.setCookie(name,val);
+	 	}
+	 }
+
+	 //获取本地缓存
+	 Z.getLocalStorage = function(name){
+	 	try{
+	 		var val = localStorage.getItem(name);
+	 		if(val && val.indexOf('{') != -1 && val.indexOf('}') != -1)
+	 			return JSON.parse(val);
+	 		return val;
+	 	}catch{
+	 		var val = Z.getCookie(name);
+	 		if(val && val.indexOf('{') != -1 && val.indexOf('}') != -1)
+	 			return JSON.parse(val);
+	 		return val;
+	 	}
+	 }
+
+	 //删除本地缓存
+	 Z.delLocalStorage = function(name){
+	 	try{
+	 		localStorage.removeItem(name);
+	 	}catch{
+	 		Z.delCookie(name);
+	 	}
+	 }
+	 
+
+	/**
+	 *时间相关操作
+	 *
+	 */
+	 function setTime(date,days,type){
+	 	return type && type == '-' ?
+	 	 date.setTime(date.getTime() - days * 24*3600*1000)
+	 	 : date.setTime(date.getTime() + days * 24*3600*1000)
+	 }
+
+	 //设置日期，默认设置为当天
+	 Z.setDate = function(date,format){
+	 	if (!date || (typeof date != 'object') || (date.constructor != Date)) return;
+            var date = date || new Date();
+            var y = date.getFullYear();
+            var m = date.getMonth() + 1;
+            var d = date.getDate();
+            var time = date.getTime();
+            if (format) {
+                switch (format) {
+                case 'monthFirstDay':
+                    d = 1;
+                    break;
+                case 'monthLastDay':
+                    var a = y,
+                    b = m;
+                    if (m == 12) {
+                        a += 1;
+                        b = 1;
+                    }
+                    d = 32 - new Date(a, b - 1, 32).getDate();
+                    break;
+                case 'oneWeek':
+                    time = setTime(date,7,'-');
+                    var newDate = new Date(time);
+                    y = newDate.getFullYear(),
+                    m = newDate.getMonth() + 1,
+                    d = newDate.getDate();
+                    break;
+				case 'oneMonth':
+					m = m == 1 ? 12 : (m-1);
+					break;
+				case 'yesterday':
+				    time = setTime(date,1,'-');
+                    var lastDay = new Date(time);
+                    y = lastDay.getFullYear(),
+                    m = lastDay.getMonth() + 1,
+                    d = lastDay.getDate();
+				    break;
+                }
+            }
+
+            return y + '-' + (m < 10 ? ('0' + m) : m) + '-' + (d < 10 ? ('0' + d) : d);
+        }
+
+
+
 
 
 	 
