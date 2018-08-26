@@ -51,9 +51,14 @@
 
 	 //将值转换为字符串
 	 Z.toString = function(str){
-	 	return (str === undefined || str === null) ? '' 
-	 	: typeof str 'object' ? JSON.stringify(str)
-	 	: String(str)
+	 	var backStr = '';
+	 	if(str === undefined || str === null){
+	 	}else if(typeof str == 'object'){
+	 		backStr = JSON.stringify(str)
+	 	}else{
+	 		backStr = String(str)
+	 	}
+	 	return backStr;
 	 }
 
 	 //是否数值型
@@ -307,14 +312,20 @@
 	 	 : date.setTime(date.getTime() + days * 24*3600*1000)
 	 }
 
+	 Z.now = function(){ return +new Date()};
+
 	 //设置日期，默认设置为当天
-	 Z.setDate = function(date,format){
+	 //format-要设置哪一天，日期当月第一天，日期当月最后一天，昨天，近一周，近一月，今天
+	 //separator-以什么分隔符
+	 Z.setDate = function(date,format,separator){
 	 	if (!date || (typeof date != 'object') || (date.constructor != Date)) return;
-            var date = date || new Date();
-            var y = date.getFullYear();
-            var m = date.getMonth() + 1;
-            var d = date.getDate();
-            var time = date.getTime();
+	 	if(format && !Z.isString(format) || separator && !Z.isString(separator)) return;
+	 	    var separator = separator == null ? "-" : separator,
+                date = date || new Date(),
+                   y = date.getFullYear(),
+                   m = date.getMonth() + 1,
+                   d = date.getDate(),
+                time = date.getTime();
             if (format) {
                 switch (format) {
                 case 'monthFirstDay':
@@ -349,12 +360,76 @@
                 }
             }
 
-            return y + '-' + (m < 10 ? ('0' + m) : m) + '-' + (d < 10 ? ('0' + d) : d);
+            return y + separator + (m < 10 ? ('0' + m) : m) + separator + (d < 10 ? ('0' + d) : d);
         }
 
+    /**
+	 *常用的校验操作
+	 *
+	 */
 
+	 //校验手机号-For China
+	 Z.checkMobile = function(tel){
+	 	return /^1[345789]\d{9}$/.test(tel);
+	 }
 
+	 //校验是否数值
+	 Z.isNumeric = function(num){
+	 	return /^[+-]?[0-9]+$/.test(num);
+	 }
 
+	 //校验是否数字或者几位数字
+	 Z.isNum = function(num,n){
+	 	return n != null && Z.isNumber(n) ? /^\d$/.test(num) && Z.toString(num).length === n : /^\d$/.test(num);
+	 }
+
+	 //校验是否字母，数字组合
+	 Z.isLetterNumber = function(str){
+	 	return /^[A-Za-z0-9]+$/.test(str);
+	 }
+
+	 //是否空值
+	 Z.isNotInput = function(str){
+	 	if(!Z.isString(str)) return;
+	 	var str = str.replace(/\s/,'');
+	 	return str.length === 0;
+	 }
+
+	/**
+	 *特殊字符转义
+	 *
+	 */
+	 Z.toHtml = function(str){
+	 	if(!Z.isString(str)) return;
+	 	return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\\/g, '&#x5C;').replace(/`/g, '&#96;');
+	 }
+
+	 Z.unTohtml = function(str){
+	 	if(!Z.isString(str)) return;
+	 	return str.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#x2F;/g, '/').replace(/&#x5C;/g, '\\').replace(/&#96;/g, '`');
+	 }
+
+	/**
+	 *获取随机值
+	 *
+	 */
+
+	 function rgb(){
+	 	return Math.floor(Math.random() * 256);
+	 }
+
+	 //获取随机颜色
+	 Z.randomColor = function(){
+	 	return 'rgb(' + rgb() + ',' + rgb() +',' + rgb() +')';
+	 }
+
+	 //获取一个范围内的随机数
+	 //未填写范围，默认返回随机4位数
+	 Z.random = function(min,max){
+	 	if(min == null && max == null) return 1000 + Math.floor(Math.random() * 8999);
+	 	if(arguments.length != 2 || !Z.isNumber(min) || !Z.isNumber(max)) return;
+	 	return min + Math.floor(Math.random() * (max - min + 1));
+	 }
 
 	 
 	 return Z
