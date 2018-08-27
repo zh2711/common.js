@@ -431,6 +431,257 @@
 	 	return min + Math.floor(Math.random() * (max - min + 1));
 	 }
 
+	/**
+	 *web loading
+	 *
+	 */
+
+	 var _load = {
+     	show: function(){
+     		var el,
+     		isHave = document.getElementById("z-loading"),
+     		isHaveAnimate = document.body.style['animation'];
+     		if(!isHave){
+     			var warp = document.createElement("div");
+     			warp.id = "z-loading";
+     			warp.style.display = "none";
+     			document.body.appendChild(warp);
+     			var mask = document.createElement("div");
+     			mask.id = "z-loading-mask";
+     			warp.appendChild(mask);
+     			if(isHaveAnimate != null){
+     				var box = document.createElement("div");
+     				box.id = "z-loading-box";
+     				try{
+     					box.innerHTML = '加载中';
+     				}catch(e){
+     					box.appendChild(document.createTextNode('加载中'));
+     				}
+     				warp.appendChild(box);
+     				mask.style.background = '#FFF';
+     			}else{
+     				var boxEl = document.createElement("div");
+     				boxEl.id = "z-loading-box";
+     				warp.appendChild(boxEl);
+     				var boxContent = document.createElement("div");
+     				boxContent.id = "z-loading-content";
+     				boxContent.className = 'z-loading-animate';
+     				boxEl.appendChild(boxContent);
+     				mask.style.background = 'none';
+     			}
+
+     			this.css();
+     		}
+
+     		// var winWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth,
+     		//     winHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight,
+     		//     left = (winWidth - 80)/2,
+     		//     top = (winHeight - 80)/2;
+     		//     loadingBox  = document.getElementById('z-loading-box');
+     		// loadingBox.style.top = top+'px';
+     		// loadingBox.style.left = left+'px';
+     		//loadingBox.style.zIndex = 9999;
+     		el = document.getElementById("z-loading");
+     		el.style.display = 'block';
+     	},
+     	hide:function(){
+     		var el = document.getElementById("z-loading");
+     		if(el == null || el.style.display == 'none') return;
+     		setTimeout(function(){
+     			el.style.display = 'none';
+     		},500);
+     	},
+     	css:function(){
+     		var css = [
+     		    '#z-loading{',
+     		    'position: fixed;',
+     		    'top: 0;',
+     		    'z-index: 9999;',
+     		    'height: 100%;',
+     		    'width: 100%;}',
+     		    '#z-loading-mask{',
+     		    'position: fixed;',
+     		    'left: 0;',
+     		    'top: 0;',
+     		    'bottom: 0;',
+     		    'right: 0;',
+     		    'background: #FFFFFF;',
+     		    'opacity: 0.60;',
+     		    'filter: alpha(opacity=60);',
+     		    'width:100%;',
+     		    'height:100%;}',
+     		    '#z-loading-box{',
+     		    'position: absolute;',
+     		    'top: 50%;',
+     		    'left: 50%;',
+     		    'margin-top: -40px;',
+     		    'margin-left: -40px;',
+     		    'width: 80px;',
+     		    'height: 80px;',
+     		    'text-align: center;',
+     		    'font-size:26px;',
+     		    'color: #000;}',
+     		    '#z-loading-content{',
+     		    'position:absolute;',
+     		    'top:0;',
+     		    'right:0;',
+     		    'bottom:0;',
+     		    'left:0;',
+     		    'margin: auto;',
+     		    'width:40px;',
+     		    'height:40px;',
+     		    'border:8px solid #333;',
+     		    'border-right-color: transparent;',
+     		    'border-radius: 50%;}',
+     		    '.z-loading-animate{',
+     		    'animation: loading-animate 1.5s infinite linear}',
+     		    '@keyframes loading-animate{',
+     		    '0%{',
+     		    'transform:rotate(0deg);}',
+     		    '50%{',
+     		    'transform:rotate(180deg);}',
+     		    '100%{',
+     		    'transform:rotate(359deg);}}'
+     		].join("");
+     		var style = document.createElement('style');
+     		try{
+     			style.innerHTML = css;
+     		}catch(e){
+     			style.appendChild(document.createTextNode(css));
+     		}
+
+     		document.head.appendChild(style);
+     	}
+     }
+
+     //add loading
+     var __load = {
+	    _timer: null,
+     	show: function(){
+     		var el,
+     		isHave = document.getElementById("z-loading");
+     		if(!isHave){
+     			var warp = document.createElement("div");
+     			warp.id = "z-loading";
+     			warp.style.display = "none";
+     			document.body.appendChild(warp);
+
+     			var mask = document.createElement("div");
+     			mask.id = "z-loading-mask";
+     			warp.appendChild(mask);
+     			
+     			var boxEl = document.createElement("div");
+     			boxEl.id = "z-loading-box";
+     			warp.appendChild(boxEl);
+
+     			for(var i = 0; i < 3; i++){
+     				var addBox = document.createElement("div");
+     				addBox.className = 'z-loading-box';
+     				boxEl.appendChild(addBox);
+     			}
+     			
+     			this.css();
+     		}
+
+     		el = document.getElementById("z-loading");
+     		el.style.display = 'block';
+     		this.startLoad();
+     	},
+     	hide:function(){
+     		var el = document.getElementById("z-loading");
+     		if(el == null || el.style.display == 'none') return;
+     		setTimeout(function(){
+     			el.style.display = 'none';
+     		},500);
+     		this.endLoad();
+     	},
+     	reset:function(){
+     		var boxs = document.getElementsByClassName("z-loading-box");
+     		for(var i=0,j=boxs.length; i<j;i++){
+     			boxs[i].style.backgroundColor = "#ccc";
+     		}
+     	},
+     	startLoad:function(){
+     		var me = this;
+     		var boxs = document.getElementsByClassName("z-loading-box");
+     		var n = 0,
+     		  len = boxs.length,
+     		  color = ["#ff006a","#10c4ec","#ff8400"];
+     		  if(this._timer != null) return;
+     		  this._timer = setInterval(function(){
+     			me.reset();
+     			boxs[n].style.backgroundColor = color[n];
+     			n++;
+     			if(n == len){
+     				n = 0;
+     			}
+     		},500);
+     	},
+     	endLoad: function(){
+     		var me = this;
+     		setTimeout(function(){
+     			clearInterval(me._timer);
+     			me._timer = null;
+     		},200);
+     	},
+     	css:function(){
+     		var css = [
+     		    '#z-loading{',
+     		    'position: fixed;',
+     		    'top: 0;',
+     		    'z-index: 9999;',
+     		    'height: 100%;',
+     		    'width: 100%;}',
+     		    '#z-loading-mask{',
+     		    'position: fixed;',
+     		    'left: 0;',
+     		    'top: 0;',
+     		    'bottom: 0;',
+     		    'right: 0;',
+     		    'background: #FFFFFF;',
+     		    'opacity: 0.60;',
+     		    'filter: alpha(opacity=60);',
+     		    'width:100%;',
+     		    'height:100%;}',
+     		    '#z-loading-box{',
+     		    'position: absolute;',
+     		    'top: 50%;',
+     		    'left: 50%;',
+     		    'margin-top: -40px;',
+     		    'margin-left: -40px;',
+     		    'width: 80px;',
+     		    'height: 80px;',
+     		    'text-align: center;',
+     		    'font-size:26px;',
+     		    'color: #000;}',
+     		    '.z-loading-box{',
+     		    'display: inline-block;',
+     		    'width: 15px;',
+		        'height: 15px;',
+		        'border-radius: 50%;',
+		        'background-color: #ccc;',
+		        'margin-right: 10px;}'
+     		].join("");
+     		var style = document.createElement('style');
+     		try{
+     			style.innerHTML = css;
+     		}catch(e){
+     			style.appendChild(document.createTextNode(css));
+     		}
+
+     		document.head.appendChild(style);
+     	}
+     }
+
+     Z.load = function(){
+     	__load.show();
+     }
+
+     Z.endLoad = function(){
+     	__load.hide();
+     }
+
+
 	 
 	 return Z
 })));
