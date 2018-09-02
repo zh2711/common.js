@@ -680,6 +680,239 @@
      Z.endLoad = function(){
      	__load.hide();
      }
+// 	ui.msg("哈哈哈");
+
+// ui.createDialog({
+//      title:'提示',
+//      content:'你好吗222ui？',
+//      ok:function(){
+//           console.log(1);
+//      }
+// });
+
+// ui.createDialog({
+//      title:'提示',
+//      content:'确定吗？',
+//      ok:function(){
+//           console.log(1);
+//      },
+//      cancel:function(){
+//       alert(1);
+//      },
+//      okText:'<span style="font-size:16px;font-weight:700;">确定</span>'
+// });
+
+// ui.createDialog({
+//      title:'用户名必填，请输入'
+// });	      
+     var ui={
+  msgTimer:null,
+  isAddDialogCss:false,
+  isMobile:/mobile/i.test(navigator.userAgent),
+  msg:function(message,timeout){
+    if(!message) return;
+    var timeout = timeout || 3000;
+    if(!document.getElementById("z-msgs")){
+      var msg = document.createElement("div");
+      msg.id = "z-msgs";
+      msg.innerHTML = '<div id="_msgcont"></div>';
+      document.body.appendChild(msg);
+    }
+    var msgCont = document.getElementById("_msgcont");
+    msgCont.innerHTML = message;
+
+    var isMobile = /mobile/i.test(navigator.userAgent);
+    if(!isMobile){
+      msgCont.style.cssText = 
+      "position: fixed;"
+      + "top:50px;"
+      + "left:50%;"
+      + "padding:10px;"
+      + "width:320px;"
+      + "margin-left:-170px;"
+      + "background-color:#333;"
+      + "color:#fff;"
+      + "font-size:16px;"
+      + "border-radius:4px;"
+      + "z-index:1024;"
+    }else{
+      msgCont.style.cssText = 
+      "display: block;"
+      + "padding:10px;"
+      + "position: fixed;"
+      + "bottom: auto;"
+      + "left: 50%;"
+      + "top: 50%;"
+      + "transform: translate(-50%,-50%);"
+      + "-webkit-transform: translate(-50%,-50%);"
+      + "-ms-transform: translate(-50%,-50%);"
+      + "transition: transform .3s, -webkit-transform .3s;"
+      + "outline: 0px;"
+      + "z-index: 1024;"
+      + "background-color: #000;"
+      + "border: 0px solid red;"
+      + "border-radius: 6px;"
+      + "background-clip: padding-box;"
+      + "font-size: 14px;"
+      + "line-height: 1.428571429;"
+      + "color: #FFF;";
+    }
+    //控制定时器，如果有就把先干掉，防止刚显示就被隐藏
+    if(this.msgTimer){
+      clearTimeout(this.msgTimer);
+      this.msgTimer = null;
+    }
+    msgCont.style.display = 'block';
+    var hide = function(){
+      msgCont.style.display = "none";
+      if(this.msgTimer){
+        clearTimeout(this.msgTimer);
+        this.msgTimer = null;
+      }
+    }
+    this.msgTimer = setTimeout(function(){
+      hide();
+    },timeout);
+  },
+  alert: function(title,content,fn,okText){
+    var self = this;
+    self.createDialog({
+     title:title,
+     content:content,
+     ok:fn,
+     okText:okText
+   });
+  },
+  confirm: function(title,content,ok,cancel,okText,cancelText){
+    var self = this;
+    self.createDialog({
+     title:title,
+     content:content,
+     ok:ok,
+     cancel:cancel || function(){},
+     okText:okText,
+     cancelText:cancelText
+   });
+  },
+  dialogEvent:function(el,fn){
+    fn && fn();
+    if(/msie|trident/.test(navigator.userAgent)){
+      el.parentNode.parentNode.parentNode.parentNode.removeNode(true);
+    }else{
+      el.parentNode.parentNode.parentNode.parentNode.remove();
+    }          
+  },
+  dialogCss: function(){
+    this.isAddDialogCss = true;
+    var style = document.createElement("style");
+    style.innerHTML = ".z-dialog-mask{position:fixed;top:0;left:0;bottom:0;right:0;z-index:1024;background-color:#ccc;opacity:0.4;filter:alpha(opacity=40);height:100%;width:100%;overflow:hidden;user-select:none;}"
+    + ".z-dialog-box-warp{position: fixed;bottom: auto;left: 50%;top: 50%;transform:translate(-50%,-50%);-webkit-transform:translate(-50%,-50%);-ms-transform:translate(-50%,-50%);transition: transform .3s, -webkit-transform .3s;outline: 0px;z-index: 1024;background-color: #FFF;border: 0px solid red;border-radius: 8px;background-clip: padding-box;font-size: 14px;line-height: 1.428571429;color: #c53232;}"
+    + ".z-dialog-title{margin: 0;padding:20px 20px 10px;min-height: 16.43px;font-size: 14px;color: #000;font-weight: 800;text-align: center;overflow: hidden;text-overflow: ellipsis;cursor: default;}"
+    + ".z-dialog-content{font-size: 14px;color: #333;padding:10px 20px 20px;}"
+    + ".z-dialog-btns{border-top:1px solid #e5e5e5;color: #03A9F4;text-align: center;cursor: pointer;height:43px;overflow:hidden;}"
+    + ".z-dialog-left-btn{width: 49.5%;float: left;display: inline-block;vertical-align: middle;padding: 10px 0px;}"
+    + ".z-dialog-right-btn{display: inline-block;width: 49.5%;float: left;padding: 10px 0px;}"
+    + ".z-dialog-btn-mid{float:left;width:1px;height:100%;background-color:#e5e5e5;}"
+    + ".z-dialog-ok-btn{padding: 10px 0px;text-align: center;}";
+    document.head.appendChild(style);
+  },
+  createDialog: function(opts){
+    var self = this;
+    var id = "z-" + (new Date().getTime()) + Math.random().toString().substr(-6);
+    var title = opts.title || '',
+    content = opts.content || '',
+    okText = opts.okText || '确定',
+    ok = opts.ok,
+    cancelText = opts.cancelText || '取消',
+    cancel = opts.cancel;
+
+    if(title == '' && content == '') return;
+
+    var warp = document.createElement("div");
+    warp.className = 'z-dialog';
+    warp.style.display = 'none';
+    warp.id = id;
+
+    var htm = "<div class='z-dialog-mask'></div>" 
+    + "<div class='z-dialog-box-warp'>"
+    + "<div class='z-dialog-box'>"
+    + "<div class='z-dialog-title'>" + title + "</div>"
+    + "<div class='z-dialog-content'>" + content + "</div>"
+    + "<div class='z-dialog-btns'>";
+
+    var haveCancel = "<div class='z-dialog-left-btn'>" + cancelText + "</div>"
+    + "<div class='z-dialog-btn-mid'></div>"
+    + "<div class='z-dialog-right-btn'>" + okText + "</div>"
+    + "<div style='clear:both;'></div>";
+
+    var noCancel = "<div class='z-dialog-ok-btn'>" + okText + "</div>";
+
+    var htmfooter = "</div></div></div>";
+
+    if(cancel){
+      htm = htm + haveCancel + htmfooter;
+    }else{
+      htm = htm + noCancel + htmfooter;
+    }
+
+    try{
+      warp.innerHTML = htm;
+    }catch(e){
+      throw new Error( "can not innerHTML: " + e );
+    }
+
+    document.body.appendChild(warp);
+
+    if(cancel){
+      var $elOk = document.getElementById(id).getElementsByClassName("z-dialog-right-btn")[0];
+      var $elCancel = document.getElementById(id).getElementsByClassName("z-dialog-left-btn")[0];
+      $elOk.onclick = function(){
+        self.dialogEvent($elOk,ok);
+      }
+      $elCancel.onclick = function(){
+        self.dialogEvent($elOk,cancel);
+      }
+    }else{
+      var $ok = document.getElementById(id).getElementsByClassName("z-dialog-ok-btn")[0];
+      $ok.onclick = function(){
+        self.dialogEvent($ok,ok);
+      }
+    }
+
+    if(title == ''){
+      document.getElementById(id).getElementsByClassName("z-dialog-title")[0].style.display = 'none';
+    }
+
+    if(content == ''){
+      document.getElementById(id).getElementsByClassName("z-dialog-content")[0].style.display = 'none';
+    }
+
+    if(self.isAddDialogCss === false){
+      self.dialogCss();
+    }
+
+    if(self.isMobile){
+      document.getElementById(id).getElementsByClassName("z-dialog-box-warp")[0].style.width = '80%';
+    }else{
+      document.getElementById(id).getElementsByClassName("z-dialog-box-warp")[0].style.width = '320px';
+    }
+
+    warp.style.display = 'block';
+  }
+
+}
+     
+     Z.msg = function(){
+     	ui.msg(msg,time);
+     }
+		      
+     Z.alert = function(){
+     	ui.alert(title,content,fn,okText);
+     }
+		      
+     Z.confirm = function(){
+     	ui.alert(title,content,ok,cancel,okText,cancelText);
+     }
 
 
 	 
